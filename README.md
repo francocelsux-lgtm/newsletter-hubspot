@@ -53,14 +53,14 @@ El modelo usado (`claude-sonnet-5` por default) se configura en la variable `ANT
 
 Además del flujo disparado por push, hay una **Routine de Claude Code** (no vive como código en este repo, se administra desde la plataforma) que corre todos los lunes 9:00 (hora Argentina):
 
-1. Arranca una sesión nueva de Claude con acceso al repo y al conector de HubSpot.
+1. Arranca una sesión nueva de Claude con acceso al repo y (cuando esté habilitado, ver limitación abajo) al conector de HubSpot.
 2. Lee `plantilla-analisis.md`, `aprendizajes/ACUMULADO.md` y el análisis más reciente en `analisis/`.
-3. Intenta traer datos de campañas individuales desde HubSpot. Si la cuenta no tiene permiso para leer `CAMPAIGN`/`MARKETING_EMAIL` (la limitación ya documentada en `ACUMULADO.md`), cae automáticamente a los datos agregados a nivel contacto y lo dice explícitamente en el análisis — nunca inventa el desglose por campaña.
+3. Busca en HubSpot los objetos `MARKETING_EMAIL` (los newsletters enviados) publicados desde la última corrida y trae sus métricas reales por envío (entregados, aperturas, clics, click-to-open, rebotes, bajas) vía `get_marketing_email_analytics`. El objeto `CAMPAIGN` está fuera de alcance a propósito: la cuenta de HubSpot no tiene ese permiso porque requiere un plan de Marketing Hub pago que hoy no está contratado — la Routine no lo pide ni lo reporta como pendiente en cada corrida.
 4. Escribe `analisis/semanal-AAAA-MM-DD.md` con las mismas reglas de siempre (etiquetas de confianza, hallazgo más crítico primero, sin inventar columnas) y agrega al final la sección "Propuesta de actualización a ACUMULADO.md".
 5. Abre un Pull Request — **nunca mergea sola**. Esa es la instancia de revisión manual que se mantiene a propósito.
 6. Cuando termina, llega un mail de resumen a `franco@celsux.com.ar` avisando que hay algo para revisar.
 
-**Limitación activa:** al crearla, la plataforma no permitió adjuntarle el conector de HubSpot a esta Routine ("connectors parameter is not available for this organization"), así que por ahora las corridas semanales van a correr sin acceso real a HubSpot y lo van a reportar explícitamente en vez de simular datos. Para habilitarlo, hay que crear o editar esta Routine desde la propia UI de Routines en claude.ai (ahí sí se puede asociar el conector de HubSpot a mano) o resolverlo con un admin de la organización.
+**Limitación activa:** la plataforma no permite adjuntarle ningún conector a una Routine creada por esta vía ("connectors parameter is not available for this organization") — esto es independiente de qué permisos tenga el conector de HubSpot en sí (que ya están al máximo posible sin plan pago). Hasta que se resuelva, las corridas semanales van a arrancar sin herramientas de HubSpot disponibles y lo van a reportar explícitamente en el PR en vez de simular datos. Para habilitarlo, hay que crear o editar esta Routine desde la propia UI de Routines en claude.ai (ahí sí se puede asociar el conector a mano) o resolverlo con un admin de la organización.
 
 ## Flujo manual (alternativa)
 

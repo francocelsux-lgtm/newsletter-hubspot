@@ -38,4 +38,4 @@ Solo 2 de 784 contactos tienen esa etiqueta cargada. Sin eso no se puede medir q
 
 ## Limitaciones conocidas de esta fuente de datos
 
-- El CRM conectado no tiene permisos para leer `CAMPAIGN` ni `MARKETING_EMAIL` (piden reautorización / upgrade de cuenta). El análisis agregado usa propiedades a nivel contacto, no el desglose por campaña individual desde HubSpot. Si se sube un export manual de la campaña (CSV/captura), ese sí permite análisis específico de esa campaña puntual.
+- El CRM conectado no tiene permisos para leer el objeto `CAMPAIGN` (requiere un plan de Marketing Hub pago que hoy no está contratado; no se resuelve reautorizando el conector). Desde el 31/jul/2026 sí tiene acceso a `MARKETING_EMAIL` (métricas reales por newsletter enviado: entregados, aperturas, clics, click-to-open, rebotes, bajas), que reemplaza al análisis agregado a nivel contacto como fuente preferida cuando el conector está disponible. Si se sube un export manual de la campaña (CSV/captura), eso sigue permitiendo análisis específico de esa pieza puntual igual.
