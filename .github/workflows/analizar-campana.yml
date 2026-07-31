@@ -75,7 +75,7 @@ jobs:
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           # ID del modelo a usar. Ajustar acá si cambia el catálogo de Anthropic.
-          ANTHROPIC_MODEL: claude-sonnet-4-6
+          ANTHROPIC_MODEL: claude-sonnet-5
         run: |
           set -euo pipefail
           while IFS= read -r campania; do
@@ -96,7 +96,7 @@ jobs:
         if: steps.detect.outputs.campaigns != ''
         env:
           GH_TOKEN: ${{ github.token }}
-          ANTHROPIC_MODEL: claude-sonnet-4-6
+          ANTHROPIC_MODEL: claude-sonnet-5
         run: |
           set -euo pipefail
 

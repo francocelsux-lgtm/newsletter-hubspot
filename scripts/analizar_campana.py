@@ -255,7 +255,7 @@ def main() -> None:
     api_key = os.environ.get("ANTHROPIC_API_KEY")
     if not api_key:
         raise SystemExit("Falta la variable de entorno ANTHROPIC_API_KEY.")
-    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+    model = os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-5")
 
     if not args.campaign_dir.is_dir():
         raise SystemExit(f"No existe la carpeta de campaña: {args.campaign_dir}")

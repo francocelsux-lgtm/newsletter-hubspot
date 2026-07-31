@@ -38,7 +38,7 @@ Sin ese secret, el paso de análisis falla explícitamente (no se genera un aná
 
 Si tu organización no permite que las Actions abran Pull Requests por default, hay que habilitarlo en **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests**.
 
-El modelo usado (`claude-sonnet-4-6` por default) se configura en la variable `ANTHROPIC_MODEL` dentro de `.github/workflows/analizar-campana.yml`, por si hay que cambiarlo más adelante.
+El modelo usado (`claude-sonnet-5` por default) se configura en la variable `ANTHROPIC_MODEL` dentro de `.github/workflows/analizar-campana.yml`, por si hay que cambiarlo más adelante.
 
 ## Reglas del análisis
 
