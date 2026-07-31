@@ -15,8 +15,8 @@ scripts/analizar_campana.py -> arma el prompt, llama a Claude y escribe el anál
 
 ## Cómo se dispara el flujo (automático)
 
-1. Fran sube la campaña nueva a `campanas/AAAA-MM-nombre-campana/` (export CSV de HubSpot, capturas, notas o brief) y hace push a `main`.
-2. Eso dispara el GitHub Action `analizar-campana.yml`, que:
+1. Fran sube la campaña nueva a `campanas/AAAA-MM-nombre-campana/` (export CSV de HubSpot, capturas, notas o brief) y hace push.
+2. Eso dispara el GitHub Action `analizar-campana.yml` (corre en cualquier rama por default; se puede restringir a la rama principal editando el `branches:` comentado en el workflow), que:
    - Detecta qué subcarpeta(s) de `campanas/` cambiaron en el push.
    - Para cada una, corre `scripts/analizar_campana.py`, que lee todos los archivos de esa campaña, `plantilla-analisis.md`, `aprendizajes/ACUMULADO.md` y el análisis más reciente que ya exista en `analisis/`.
    - Llama a la API de Anthropic (modelo configurado en el workflow) para generar el análisis siguiendo exactamente la plantilla.

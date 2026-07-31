@@ -1,10 +1,11 @@
 name: Analizar campaña de marketing
 
-# Se dispara cuando se agrega o modifica algo dentro de campanas/**.
-# Si tu rama por defecto no es "main", ajustá el filtro de abajo.
+# Se dispara cuando se agrega o modifica algo dentro de campanas/**, en
+# cualquier rama. Si querés limitarlo a tu rama principal una vez que el
+# repo tenga una, descomentá "branches:" de abajo.
 on:
   push:
-    branches: [main]
+    # branches: [main]
     paths:
       - "campanas/**"
   workflow_dispatch:
