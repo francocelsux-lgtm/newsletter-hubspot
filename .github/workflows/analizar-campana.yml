@@ -1,0 +1,136 @@
+name: Analizar campaña de marketing
+
+# Se dispara cuando se agrega o modifica algo dentro de campanas/**.
+# Si tu rama por defecto no es "main", ajustá el filtro de abajo.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "campanas/**"
+  workflow_dispatch:
+    inputs:
+      campania:
+        description: "Nombre exacto de la subcarpeta en campanas/ a re-analizar"
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  analizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detectar carpetas de campaña modificadas
+        id: detect
+        run: |
+          set -euo pipefail
+
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            CAMPAIGNS="${{ github.event.inputs.campania }}"
+          else
+            BEFORE="${{ github.event.before }}"
+            AFTER="${{ github.event.after }}"
+            EMPTY_TREE="0000000000000000000000000000000000000000"
+            if [ "$BEFORE" = "$EMPTY_TREE" ]; then
+              BEFORE=$(git hash-object -t tree /dev/null)
+            fi
+            CHANGED=$(git diff --name-only "$BEFORE" "$AFTER" -- campanas/ || true)
+
+            # Solo cuentan archivos dentro de una subcarpeta de campanas/
+            # (campanas/<carpeta-campaña>/archivo), no sueltos en la raíz.
+            CAMPAIGNS=$(echo "$CHANGED" | awk -F/ 'NF>2 {print $2}' | sort -u)
+          fi
+
+          if [ -z "$CAMPAIGNS" ]; then
+            echo "No se detectaron carpetas de campaña con cambios relevantes."
+          fi
+
+          {
+            echo "campaigns<<EOF"
+            echo "$CAMPAIGNS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Configurar Python
+        if: steps.detect.outputs.campaigns != ''
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Snapshot de análisis existentes
+        if: steps.detect.outputs.campaigns != ''
+        run: |
+          mkdir -p analisis
+          ls analisis/*.md > /tmp/previous_analyses.txt 2>/dev/null || true
+
+      - name: Analizar cada campaña con Claude
+        if: steps.detect.outputs.campaigns != ''
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # ID del modelo a usar. Ajustar acá si cambia el catálogo de Anthropic.
+          ANTHROPIC_MODEL: claude-sonnet-4-6
+        run: |
+          set -euo pipefail
+          while IFS= read -r campania; do
+            [ -z "$campania" ] && continue
+            echo "::group::Analizando $campania"
+            python3 scripts/analizar_campana.py \
+              --campaign-name "$campania" \
+              --campaign-dir "campanas/$campania" \
+              --template "plantilla-analisis.md" \
+              --acumulado "aprendizajes/ACUMULADO.md" \
+              --analisis-dir "analisis" \
+              --previous-list "/tmp/previous_analyses.txt" \
+              --output "analisis/$campania.md"
+            echo "::endgroup::"
+          done <<< "${{ steps.detect.outputs.campaigns }}"
+
+      - name: Crear rama y Pull Request con el análisis
+        if: steps.detect.outputs.campaigns != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ANTHROPIC_MODEL: claude-sonnet-4-6
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- analisis/; then
+            echo "No se generaron cambios en analisis/, no se abre PR."
+            exit 0
+          fi
+
+          BRANCH="analisis/auto-${{ github.run_id }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -b "$BRANCH"
+          git add analisis/
+          git commit -m "Análisis automático de campaña: ${{ steps.detect.outputs.campaigns }}"
+          git push -u origin "$BRANCH"
+
+          CAMPAIGNS_LIST=$(echo "${{ steps.detect.outputs.campaigns }}" | sed '/^$/d' | sed 's/^/- /')
+
+          BODY_FILE=$(mktemp)
+          {
+            echo "Análisis generado automáticamente a partir de los archivos subidos en \`campanas/\`."
+            echo ""
+            echo "Campañas analizadas en esta corrida:"
+            echo "$CAMPAIGNS_LIST"
+            echo ""
+            echo "Revisar antes de mergear:"
+            echo "- Que las métricas coincidan con el archivo fuente."
+            echo "- La sección **Propuesta de actualización a ACUMULADO.md** al final de cada análisis: son propuestas, no se aplicaron solas. Si las aceptás, copiá manualmente las entradas a \`aprendizajes/ACUMULADO.md\`."
+            echo ""
+            echo "Generado por el workflow \`analizar-campana.yml\` (modelo: \`$ANTHROPIC_MODEL\`)."
+          } > "$BODY_FILE"
+
+          gh pr create \
+            --base "${{ github.event.repository.default_branch }}" \
+            --head "$BRANCH" \
+            --title "Análisis de campaña: ${{ steps.detect.outputs.campaigns }}" \
+            --body-file "$BODY_FILE"
