@@ -49,6 +49,19 @@ El modelo usado (`claude-sonnet-5` por default) se configura en la variable `ANT
 - Las adiciones a `ACUMULADO.md` nunca se aplican solas: quedan propuestas al final del análisis para que alguien las revise y las copie a mano.
 - Los aprendizajes de `ACUMULADO.md` están para consultarse antes de escribir el copy de una campaña nueva, no solo para archivarse.
 
+## Chequeo semanal automático (Routine, vía conector de HubSpot)
+
+Además del flujo disparado por push, hay una **Routine de Claude Code** (no vive como código en este repo, se administra desde la plataforma) que corre todos los lunes 9:00 (hora Argentina):
+
+1. Arranca una sesión nueva de Claude con acceso al repo y al conector de HubSpot.
+2. Lee `plantilla-analisis.md`, `aprendizajes/ACUMULADO.md` y el análisis más reciente en `analisis/`.
+3. Intenta traer datos de campañas individuales desde HubSpot. Si la cuenta no tiene permiso para leer `CAMPAIGN`/`MARKETING_EMAIL` (la limitación ya documentada en `ACUMULADO.md`), cae automáticamente a los datos agregados a nivel contacto y lo dice explícitamente en el análisis — nunca inventa el desglose por campaña.
+4. Escribe `analisis/semanal-AAAA-MM-DD.md` con las mismas reglas de siempre (etiquetas de confianza, hallazgo más crítico primero, sin inventar columnas) y agrega al final la sección "Propuesta de actualización a ACUMULADO.md".
+5. Abre un Pull Request — **nunca mergea sola**. Esa es la instancia de revisión manual que se mantiene a propósito.
+6. Cuando termina, llega un mail de resumen a `franco@celsux.com.ar` avisando que hay algo para revisar.
+
+**Limitación activa:** al crearla, la plataforma no permitió adjuntarle el conector de HubSpot a esta Routine ("connectors parameter is not available for this organization"), así que por ahora las corridas semanales van a correr sin acceso real a HubSpot y lo van a reportar explícitamente en vez de simular datos. Para habilitarlo, hay que crear o editar esta Routine desde la propia UI de Routines en claude.ai (ahí sí se puede asociar el conector de HubSpot a mano) o resolverlo con un admin de la organización.
+
 ## Flujo manual (alternativa)
 
 Si preferís pedir el análisis a mano en vez de esperar al push:
